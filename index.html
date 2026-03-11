@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Spotify Login</title>
+</head>
+<body style="background:black;color:white;font-family:sans-serif;text-align:center;margin-top:40vh;font-size:40px">
+<div id="login">Loading...</div>
+
+<script>
+const clientId = "3caeb60e0d5a4b44a1db78653383f390";
+// This must match the redirect URI registered in Spotify Dashboard
+const redirectUri = "https://nanachiiiiii.github.io/standalone-quest-vrc-chatbox-spotify-display/settings.html";
+
+// Build Spotify login URL
+const authUrl =
+  "https://accounts.spotify.com/authorize" +
+  "?client_id=" + clientId +
+  "&response_type=token" +   // Implicit Grant flow
+  "&redirect_uri=" + encodeURIComponent(redirectUri) +
+  "&scope=user-read-currently-playing";
+
+// Display login link
+document.getElementById("login").innerHTML =
+  "<a style='color:white;font-size:40px;' href='" + authUrl + "'>Login with Spotify</a>";
+</script>
+</body>
+</html>
