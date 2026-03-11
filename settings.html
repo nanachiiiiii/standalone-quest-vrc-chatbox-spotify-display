@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Spotify Now Playing (PKCE)</title>
+</head>
+<body style="background:black;color:white;text-align:center;padding-top:20px;font-size:28px;font-family:sans-serif;">
+<h1>Spotify Now Playing</h1>
+<div id="song">Fetching...</div>
+<div style="margin-top:20px;">
+  Refresh interval (ms): <input type="number" id="refresh" value="3000">
+</div>
+
+<script>
+
+// config
+const clientId = "3caeb60e0d5a4b44a1db78653383f390";
+const redirectUri = "https://nanachiiiiii.github.io/standalone-quest-vrc-chatbox-spotify-display/settings.html";
+
+// parse URL code
+const query = new URLSearchParams(window.location.search);
+const code = query.get("code");
+
+// get stored verifier
+const verifier = localStorage.getItem("pkce_verifier");
+
+// exchange code for token
+async function getToken(code) {
+  const body = new URLSearchParams({
+    client_id: clientId,
+    grant_type: "authorization_code",
+    code: code,
+    redirect_uri: redirectUri,
+    code_verifier: verifier
+  });
+
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString()
+  });
+
+  return response.json();
+}
+
+let accessToken;
+
+async function init() {
+  if (!code) {
+    document.getElementById("song").innerText = "No login code found — go back to login.";
+    return;
+  }
+
+  const tokenResponse = await getToken(code);
+  accessToken = tokenResponse.access_token;
+
+  if (!accessToken) {
+    document.getElementById("song").innerText = "Token fetch failed. Try re-login.";
+    return;
+  }
+
+  startUpdates();
+}
+
+async function updateSong() {
+  if (!accessToken) return;
+
+  const r = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+    headers: { "Authorization": "Bearer " + accessToken }
+  });
+
+  if (!r.ok) return;
+
+  const data = await r.json();
+  const name = data.item?.name;
+  const artist = data.item?.artists[0]?.name;
+
+  document.getElementById("song").innerText = 
+    name && artist ? "Now Playing: " + name + " - " + artist : "Nothing playing";
+}
+
+// refresh logic
+let intervalId;
+function startUpdates() {
+  clearInterval(intervalId);
+  const interval = parseInt(document.getElementById("refresh").value);
+  intervalId = setInterval(updateSong, interval);
+  updateSong();
+}
+
+document.getElementById("refresh").addEventListener("change", startUpdates);
+
+init();
+
+</script>
+
+</body>
+</html>
